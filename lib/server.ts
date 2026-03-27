@@ -4,6 +4,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import { loadSpec, listEndpoints, getEndpoint } from "./spec.js";
+import { logToolCall } from "./supabase.js";
 import type { AuthResult } from "./auth.js";
 
 const CAKEMAIL_API = "https://api.cakemail.dev";
@@ -32,6 +33,13 @@ export function createServer(auth?: AuthResult): McpServer {
         ),
     },
     async ({ tag, search }) => {
+      logToolCall({
+        userType: auth?.type ?? "unknown",
+        userId: auth?.userId ?? null,
+        tool: "list_endpoints",
+        query: [tag && `tag:${tag}`, search].filter(Boolean).join(" ") || "*",
+      }).catch(() => {});
+
       const spec = await loadSpec();
       const results = listEndpoints(spec, { tag, search });
 
@@ -79,6 +87,13 @@ export function createServer(auth?: AuthResult): McpServer {
         .describe("The HTTP method (e.g. GET, POST, PATCH, DELETE)"),
     },
     async ({ operationId, path, method }) => {
+      logToolCall({
+        userType: auth?.type ?? "unknown",
+        userId: auth?.userId ?? null,
+        tool: "get_endpoint",
+        query: operationId ?? `${method} ${path}`,
+      }).catch(() => {});
+
       const spec = await loadSpec();
 
       let detail;
@@ -135,6 +150,13 @@ export function createServer(auth?: AuthResult): McpServer {
         .describe("JSON request body"),
     },
     async ({ method, path, query, body }) => {
+      logToolCall({
+        userType: auth?.type ?? "unknown",
+        userId: auth?.userId ?? null,
+        tool: "call_api",
+        query: `${method} ${path}`,
+      }).catch(() => {});
+
       if (!auth?.accessToken) {
         return {
           content: [

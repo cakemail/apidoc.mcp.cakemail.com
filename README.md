@@ -107,12 +107,15 @@ claude mcp add cakemail-api \
 |----------|--------|------|-------------|
 | `/api/mcp` | POST/GET | Basic or Bearer | MCP Streamable HTTP endpoint |
 | `/api/auth` | POST | None | Get access token with Cakemail credentials |
+| `/api/usage` | GET | Admin API key | Tool usage stats. Optional: `?since=2026-03-01&until=2026-03-31` |
 
 ## Environment Variables
 
 | Variable | Description |
 |----------|-------------|
 | `API_KEY` | Admin API key for service authentication |
+| `SUPABASE_URL` | Shared Supabase project URL (same as kb.mcp) |
+| `SUPABASE_SERVICE_KEY` | Supabase service role key |
 
 ## Development
 

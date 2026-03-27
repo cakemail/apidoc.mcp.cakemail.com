@@ -147,6 +147,10 @@ const html = `<!DOCTYPE html>
         <h3>POST /api/auth</h3>
         <p>Get an access token with Cakemail credentials. Accepts <code>username</code>, <code>password</code>, and optional <code>account_id</code>.</p>
       </div>
+      <div class="tool">
+        <h3>GET /api/usage</h3>
+        <p>View tool usage statistics per user. Optional: <code>?since=2026-03-01&amp;until=2026-03-31</code>. Admin API key required.</p>
+      </div>
     </div>
 
     <footer>
