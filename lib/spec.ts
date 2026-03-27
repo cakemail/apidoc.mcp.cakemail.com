@@ -209,10 +209,15 @@ function followRef(ref: string, spec: OpenAPISpec): unknown {
   return current === undefined ? undefined : structuredClone(current);
 }
 
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
 let cachedSpec: OpenAPISpec | null = null;
+let cachedAt = 0;
 
 export async function loadSpec(): Promise<OpenAPISpec> {
-  if (cachedSpec) return cachedSpec;
+  if (cachedSpec && Date.now() - cachedAt < CACHE_TTL_MS) {
+    return cachedSpec;
+  }
 
   const response = await fetch(SPEC_URL);
   if (!response.ok) {
@@ -220,9 +225,11 @@ export async function loadSpec(): Promise<OpenAPISpec> {
   }
 
   cachedSpec = (await response.json()) as OpenAPISpec;
+  cachedAt = Date.now();
   return cachedSpec;
 }
 
 export function setSpec(spec: OpenAPISpec): void {
   cachedSpec = spec;
+  cachedAt = Date.now();
 }
