@@ -168,7 +168,7 @@ describe("call_api tool", () => {
 
     const result = await noAuthClient.callTool({
       name: "call_api",
-      arguments: { method: "GET", path: "/campaigns" },
+      arguments: { path: "/campaigns" },
     });
     const text = (result.content as Array<{ type: string; text: string }>)[0].text;
     expect(text).toContain("authentication");

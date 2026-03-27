@@ -136,25 +136,20 @@ export function createServer(auth?: AuthResult): McpServer {
 
   server.tool(
     "call_api",
-    "Execute a Cakemail API call. Proxies the request using the authenticated user's credentials.",
+    "Read data from the Cakemail API (GET only). Useful for verifying API behavior with real data.",
     {
-      method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).describe("HTTP method"),
       path: z.string().describe("API path (e.g. /campaigns, /contacts/123)"),
       query: z
         .record(z.string(), z.string())
         .optional()
         .describe("Query parameters as key-value pairs"),
-      body: z
-        .record(z.string(), z.unknown())
-        .optional()
-        .describe("JSON request body"),
     },
-    async ({ method, path, query, body }) => {
+    async ({ path, query }) => {
       logToolCall({
         userType: auth?.type ?? "unknown",
         userId: auth?.userId ?? null,
         tool: "call_api",
-        query: `${method} ${path}`,
+        query: `GET ${path}`,
       }).catch(() => {});
 
       if (!auth?.accessToken) {
@@ -175,20 +170,14 @@ export function createServer(auth?: AuthResult): McpServer {
         }
       }
 
-      const headers: Record<string, string> = {
-        Authorization: `Bearer ${auth.accessToken}`,
-        Accept: "application/json",
-      };
-
-      const init: RequestInit = { method, headers };
-
-      if (body && method !== "GET") {
-        headers["Content-Type"] = "application/json";
-        init.body = JSON.stringify(body);
-      }
-
       try {
-        const response = await fetch(url.toString(), init);
+        const response = await fetch(url.toString(), {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${auth.accessToken}`,
+            Accept: "application/json",
+          },
+        });
         const contentType = response.headers.get("content-type") ?? "";
         let responseText: string;
 

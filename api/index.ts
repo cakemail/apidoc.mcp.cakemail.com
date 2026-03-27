@@ -101,7 +101,7 @@ const html = `<!DOCTYPE html>
       </div>
       <div class="tool">
         <h3>call_api</h3>
-        <p>Execute an API call using your authenticated Cakemail credentials.</p>
+        <p>Read data from the Cakemail API (GET only). Useful for verifying API behavior with real data.</p>
       </div>
     </div>
 

@@ -44,14 +44,12 @@ Provide either `operationId` or both `path` + `method`.
 
 ### `call_api`
 
-Execute a Cakemail API call using your authenticated credentials.
+Read data from the Cakemail API (GET only). Useful for verifying API behavior with real data.
 
 | Parameter | Type   | Required | Description |
 |-----------|--------|----------|-------------|
-| `method`  | string | yes      | HTTP method (GET, POST, PATCH, DELETE) |
-| `path`    | string | yes      | API path (e.g. /campaigns) |
+| `path`    | string | yes      | API path (e.g. /campaigns, /contacts/123) |
 | `query`   | object | no       | Query parameters as key-value pairs |
-| `body`    | object | no       | JSON request body |
 
 ## Authentication
 
