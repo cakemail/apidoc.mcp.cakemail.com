@@ -163,7 +163,28 @@ export function createServer(auth?: AuthResult): McpServer {
         };
       }
 
+      if (/^[a-z]+:\/\//i.test(path)) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "Invalid path: must be a relative path (e.g. /campaigns). Absolute URLs are not allowed.",
+            },
+          ],
+        };
+      }
+
       const url = new URL(path, CAKEMAIL_API);
+      if (url.origin !== new URL(CAKEMAIL_API).origin) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "Invalid path: URL must point to the Cakemail API.",
+            },
+          ],
+        };
+      }
       if (query) {
         for (const [key, value] of Object.entries(query)) {
           url.searchParams.set(key, value);

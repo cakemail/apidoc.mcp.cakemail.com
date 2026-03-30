@@ -173,4 +173,22 @@ describe("call_api tool", () => {
     const text = (result.content as Array<{ type: string; text: string }>)[0].text;
     expect(text).toContain("authentication");
   });
+
+  it("rejects absolute URLs to prevent SSRF", async () => {
+    const result = await client.callTool({
+      name: "call_api",
+      arguments: { path: "https://evil.com/steal" },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toContain("Absolute URLs are not allowed");
+  });
+
+  it("rejects absolute URLs with other schemes", async () => {
+    const result = await client.callTool({
+      name: "call_api",
+      arguments: { path: "ftp://evil.com/data" },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toContain("Absolute URLs are not allowed");
+  });
 });
