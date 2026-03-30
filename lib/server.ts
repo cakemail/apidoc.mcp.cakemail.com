@@ -36,6 +36,7 @@ export function createServer(auth?: AuthResult): McpServer {
       logToolCall({
         userType: auth?.type ?? "unknown",
         userId: auth?.userId ?? null,
+        accountId: auth?.accountId ?? null,
         tool: "list_endpoints",
         query: [tag && `tag:${tag}`, search].filter(Boolean).join(" ") || "*",
       }).catch(() => {});
@@ -90,6 +91,7 @@ export function createServer(auth?: AuthResult): McpServer {
       logToolCall({
         userType: auth?.type ?? "unknown",
         userId: auth?.userId ?? null,
+        accountId: auth?.accountId ?? null,
         tool: "get_endpoint",
         query: operationId ?? `${method} ${path}`,
       }).catch(() => {});
@@ -148,6 +150,7 @@ export function createServer(auth?: AuthResult): McpServer {
       logToolCall({
         userType: auth?.type ?? "unknown",
         userId: auth?.userId ?? null,
+        accountId: auth?.accountId ?? null,
         tool: "call_api",
         query: `GET ${path}`,
       }).catch(() => {});
