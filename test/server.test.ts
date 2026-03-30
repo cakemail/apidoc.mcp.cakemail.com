@@ -65,7 +65,7 @@ let client: Client;
 
 beforeAll(async () => {
   setSpec(fixture);
-  const server = createServer({ type: "cakemail", userId: "1", accessToken: "test-token" });
+  const server = createServer({ type: "cakemail", userId: "1", accountId: "100", accessToken: "test-token" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
   client = new Client({ name: "test-client", version: "1.0.0" });
