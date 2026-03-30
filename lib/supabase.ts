@@ -32,7 +32,47 @@ export async function logToolCall(params: {
   });
 }
 
-export async function getUsageStats(params?: {
+export async function getUsageStats(params: {
+  userId: string;
+  since?: string;
+  until?: string;
+}): Promise<{
+  total: number;
+  byTool: { tool: string; count: number }[];
+}> {
+  const db = getClient();
+  let query = db
+    .from("query_logs")
+    .select("query, created_at")
+    .eq("source", SOURCE)
+    .eq("user_id", params.userId);
+
+  if (params.since) {
+    query = query.gte("created_at", params.since);
+  }
+  if (params.until) {
+    query = query.lte("created_at", params.until);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const counts = new Map<string, number>();
+  for (const row of data) {
+    const match = (row.query as string).match(/^\[(\w+)\]/);
+    const tool = match ? match[1] : "unknown";
+    counts.set(tool, (counts.get(tool) ?? 0) + 1);
+  }
+
+  return {
+    total: data.length,
+    byTool: Array.from(counts.entries())
+      .map(([tool, count]) => ({ tool, count }))
+      .sort((a, b) => b.count - a.count),
+  };
+}
+
+export async function getAdminUsageStats(params?: {
   since?: string;
   until?: string;
 }): Promise<{
