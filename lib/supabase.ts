@@ -62,7 +62,7 @@ export async function getUsageStats(params?: {
     { user_type: string; user_id: string | null; account_id: string | null; count: number }
   >();
   for (const row of data) {
-    const key = `${row.user_type}:${row.user_id ?? "admin"}`;
+    const key = `${row.user_type}:${row.user_id ?? "admin"}:${row.account_id ?? ""}`;
     const existing = counts.get(key);
     if (existing) {
       existing.count++;

@@ -1,7 +1,7 @@
 // ABOUTME: Tests for JWT-based authentication in lib/auth.ts.
 // ABOUTME: Uses a generated RSA keypair to sign and verify mock tokens.
 
-import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
 import { generateKeyPairSync } from "crypto";
 import jwt from "jsonwebtoken";
 import { authenticateRequest, _resetForTesting } from "../lib/auth.js";
@@ -55,6 +55,10 @@ beforeAll(() => {
 
     return new Response("Not found", { status: 404 });
   }) as typeof fetch;
+});
+
+afterAll(() => {
+  globalThis.fetch = originalFetch;
 });
 
 beforeEach(() => {
