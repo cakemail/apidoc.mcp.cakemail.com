@@ -12,15 +12,18 @@ export interface AuthResult {
   accessToken: string;
 }
 
-let jwtService: JwtService | null = null;
+let jwtServicePromise: Promise<JwtService> | null = null;
 
-async function getJwtService(): Promise<JwtService> {
-  if (jwtService) return jwtService;
-  const response = await fetch(`${CAKEMAIL_API}/token/pubkey`);
-  if (!response.ok) throw new Error("Failed to fetch public key");
-  const publicKey = await response.text();
-  jwtService = new JwtService(publicKey);
-  return jwtService;
+function getJwtService(): Promise<JwtService> {
+  if (!jwtServicePromise) {
+    jwtServicePromise = (async () => {
+      const response = await fetch(`${CAKEMAIL_API}/token/pubkey`);
+      if (!response.ok) throw new Error("Failed to fetch public key");
+      const publicKey = await response.text();
+      return new JwtService(publicKey);
+    })();
+  }
+  return jwtServicePromise;
 }
 
 const sessionCache = new Map<
@@ -30,7 +33,7 @@ const sessionCache = new Map<
 
 /** Reset module-level caches. Exported for testing only. */
 export function _resetForTesting(): void {
-  jwtService = null;
+  jwtServicePromise = null;
   sessionCache.clear();
 }
 
