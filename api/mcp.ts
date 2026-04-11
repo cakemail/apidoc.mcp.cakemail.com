@@ -1,9 +1,8 @@
 // ABOUTME: Vercel serverless function that serves the MCP protocol over Streamable HTTP.
-// ABOUTME: Authenticates via admin API key, Basic Auth (Cakemail credentials), or Bearer token.
+// ABOUTME: No user auth required — this is a spec browser, not a data access point.
 
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createServer } from "../lib/server.js";
-import { authenticateRequest } from "../lib/auth.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 export default async function handler(
@@ -21,18 +20,27 @@ export default async function handler(
     return;
   }
 
-  const auth = await authenticateRequest(req.headers["authorization"]);
-  if (!auth) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
+
+  const apiKey = process.env.API_KEY;
+  if (apiKey) {
+    const auth = req.headers["authorization"];
+    const token =
+      typeof auth === "string" && auth.startsWith("Bearer ")
+        ? auth.slice(7)
+        : null;
+    if (token !== apiKey) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
   }
+
 
   const transport = new StreamableHTTPServerTransport({
     enableJsonResponse: true,
   });
 
   if (req.method === "POST" || req.method === "GET") {
-    const server = createServer(auth);
+    const server = createServer();
     await server.connect(transport);
   }
 

@@ -1,18 +1,41 @@
 // ABOUTME: Authenticates requests via admin API key, Basic Auth with Cakemail credentials, or Bearer token.
-// ABOUTME: Retains access tokens so the MCP server can proxy API calls on behalf of the user.
+// ABOUTME: Verifies Bearer JWTs locally using the Cakemail public key.
+
+import { JwtService } from "@cakemail-org/ngapi-ts-auth-middleware";
 
 const CAKEMAIL_API = "https://api.cakemail.dev";
 
 export interface AuthResult {
   type: "admin" | "cakemail";
   userId: string | null;
+  accountId: string | null;
   accessToken: string;
+}
+
+let jwtServicePromise: Promise<JwtService> | null = null;
+
+function getJwtService(): Promise<JwtService> {
+  if (!jwtServicePromise) {
+    jwtServicePromise = (async () => {
+      const response = await fetch(`${CAKEMAIL_API}/token/pubkey`);
+      if (!response.ok) throw new Error("Failed to fetch public key");
+      const publicKey = await response.text();
+      return new JwtService(publicKey);
+    })();
+  }
+  return jwtServicePromise;
 }
 
 const sessionCache = new Map<
   string,
   { result: AuthResult; expiresAt: number }
 >();
+
+/** Reset module-level caches. Exported for testing only. */
+export function _resetForTesting(): void {
+  jwtServicePromise = null;
+  sessionCache.clear();
+}
 
 function parseAuthHeader(
   authHeader: string | string[] | undefined
@@ -73,13 +96,15 @@ async function loginWithCredentials(
     const data = (await response.json()) as {
       access_token: string;
       expires_in: number;
-      accounts?: number[];
     };
+
+    const svc = await getJwtService();
+    const decoded = await svc.verify(data.access_token);
 
     const result: AuthResult = {
       type: "cakemail",
-      userId:
-        data.accounts?.[0] != null ? String(data.accounts[0]) : null,
+      userId: String(decoded.id),
+      accountId: String(decoded.account_id),
       accessToken: data.access_token,
     };
 
@@ -97,31 +122,16 @@ async function loginWithCredentials(
 async function validateBearerToken(
   token: string
 ): Promise<AuthResult | null> {
-  const cached = sessionCache.get(`bearer:${token}`);
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.result;
-  }
-
   try {
-    const response = await fetch(`${CAKEMAIL_API}/accounts/self`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const svc = await getJwtService();
+    const decoded = await svc.verify(token);
 
-    if (!response.ok) return null;
-
-    const data = (await response.json()) as { id?: number };
-    const result: AuthResult = {
+    return {
       type: "cakemail",
-      userId: data.id != null ? String(data.id) : null,
+      userId: String(decoded.id),
+      accountId: String(decoded.account_id),
       accessToken: token,
     };
-
-    sessionCache.set(`bearer:${token}`, {
-      result,
-      expiresAt: Date.now() + 5 * 60 * 1000,
-    });
-
-    return result;
   } catch {
     return null;
   }
@@ -136,7 +146,7 @@ export async function authenticateRequest(
   if (parsed.scheme === "bearer") {
     const apiKey = process.env.API_KEY;
     if (apiKey && parsed.value === apiKey) {
-      return { type: "admin", userId: null, accessToken: parsed.value };
+      return { type: "admin", userId: null, accountId: null, accessToken: parsed.value };
     }
     return validateBearerToken(parsed.value);
   }

@@ -1,4 +1,4 @@
-// ABOUTME: Loads the Cakemail OpenAPI spec and provides query functions.
+// ABOUTME: Loads the OpenAPI spec and provides query functions.
 // ABOUTME: Supports listing endpoints, getting details with $ref resolution, and caching.
 
 const SPEC_URL = "https://api.cakemail.dev/openapi.json";
@@ -124,7 +124,6 @@ export function getEndpoint(
     return buildDetail(spec, pathOrOperationId, normalizedMethod, op);
   }
 
-  // Search by operationId
   for (const [path, methods] of Object.entries(spec.paths)) {
     for (const m of HTTP_METHODS) {
       const op = methods[m];
@@ -197,7 +196,6 @@ export function resolveRefs(
 }
 
 function followRef(ref: string, spec: OpenAPISpec): unknown {
-  // Only handle internal refs: #/components/schemas/Foo
   if (!ref.startsWith("#/")) return undefined;
 
   const parts = ref.slice(2).split("/");
@@ -209,7 +207,7 @@ function followRef(ref: string, spec: OpenAPISpec): unknown {
   return current === undefined ? undefined : structuredClone(current);
 }
 
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const CACHE_TTL_MS = 3600000;
 
 let cachedSpec: OpenAPISpec | null = null;
 let cachedAt = 0;

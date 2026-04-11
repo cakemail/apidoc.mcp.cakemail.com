@@ -20,6 +20,7 @@ function getClient(): SupabaseClient {
 export async function logToolCall(params: {
   userType: string;
   userId: string | null;
+  accountId: string | null;
   tool: string;
   query: string;
 }): Promise<void> {
@@ -27,6 +28,7 @@ export async function logToolCall(params: {
   await db.from("query_logs").insert({
     user_type: params.userType,
     user_id: params.userId,
+    account_id: params.accountId,
     query: `[${params.tool}] ${params.query}`,
     source: SOURCE,
   });
@@ -77,12 +79,12 @@ export async function getAdminUsageStats(params?: {
   until?: string;
 }): Promise<{
   total: number;
-  byUser: { user_type: string; user_id: string | null; count: number }[];
+  byUser: { user_type: string; user_id: string | null; account_id: string | null; count: number }[];
 }> {
   const db = getClient();
   let query = db
     .from("query_logs")
-    .select("user_type, user_id, created_at")
+    .select("user_type, user_id, account_id, created_at")
     .eq("source", SOURCE);
 
   if (params?.since) {
@@ -97,10 +99,10 @@ export async function getAdminUsageStats(params?: {
 
   const counts = new Map<
     string,
-    { user_type: string; user_id: string | null; count: number }
+    { user_type: string; user_id: string | null; account_id: string | null; count: number }
   >();
   for (const row of data) {
-    const key = `${row.user_type}:${row.user_id ?? "admin"}`;
+    const key = `${row.user_type}:${row.user_id ?? "admin"}:${row.account_id ?? ""}`;
     const existing = counts.get(key);
     if (existing) {
       existing.count++;
@@ -108,6 +110,7 @@ export async function getAdminUsageStats(params?: {
       counts.set(key, {
         user_type: row.user_type,
         user_id: row.user_id,
+        account_id: row.account_id,
         count: 1,
       });
     }
